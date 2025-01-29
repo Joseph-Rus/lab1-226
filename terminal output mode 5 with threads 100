@@ -1,0 +1,47 @@
+
+┌──(echo㉿echo)-[~/coding]
+└─$ sudo python3 scan-port.py
+Running port scanner...
+Enter the number of threads: 100
+Modes:
+1: Well-known ports (1-1023)
+2: Registered ports (1-49151)
+3: Common ports
+4: Custom ports
+5: Security analysis ports
+Enter the scanning mode: 5
+[-] Port 143 is CLOSED
+[-] Port 21 is CLOSED
+[-] Port 1433 is CLOSED
+[-] Port 110 is CLOSED
+[-] Port 123 is CLOSED
+[-] Port 88 is CLOSED
+[-] Port 25 is CLOSED
+[-] Port 23 is CLOSED
+[-] Port 139 is CLOSED
+[-] Port 1434 is CLOSED
+[-] Port 20 is CLOSED
+[-] Port 465 is CLOSED
+[-] Port 8080 is CLOSED
+[-] Port 3389 is CLOSED
+[-] Port 5060 is CLOSED
+[-] Port 162 is CLOSED
+[+] Port 80 is OPEN
+[-] Port 161 is CLOSED
+[-] Port 636 is CLOSED
+[-] Port 5061 is CLOSED
+[-] Port 389 is CLOSED
+[+] Port 22 is OPEN
+[-] Port 3306 is CLOSED
+[-] Port 993 is CLOSED
+[-] Port 53 is CLOSED
+[-] Port 443 is CLOSED
+[-] Port 500 is CLOSED
+[-] Port 445 is CLOSED
+
+[+] Scan complete.
+Open ports: [22, 80]
+Closed ports: 26 ports were closed.
+
+┌──(echo㉿echo)-[~/coding]
+└─$
