@@ -3,27 +3,38 @@ import socket
 import threading
 
 # Define target host and initialize global variables
-target = "127.0.0.1"  # You can change this to scan a remote IP or hostname
+target = "127.0.0.1"  # Change this if scanning a remote IP or hostname
 queue = Queue()
 open_ports = []
+closed_ports = []
+lock = threading.Lock()  # To ensure thread-safe appending and printing
 
 # Port scanning function
 def portscan(port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)  # Add timeout to avoid hanging
-        sock.connect((target, port))
-        sock.close()  # Close the socket after use
-        return True
-    except:
-        return False
+        sock.settimeout(1)  # Timeout for responsiveness
+        result = sock.connect_ex((target, port))  # Returns 0 if open
+        sock.close()
+        
+        with lock:
+            if result == 0:
+                open_ports.append(port)
+                print(f"[+] Port {port} is OPEN")
+            else:
+                closed_ports.append(port)
+                print(f"[-] Port {port} is CLOSED")
+
+    except Exception as e:
+        with lock:
+            print(f"[!] Error scanning port {port}: {e}")
 
 # Function to populate the queue with ports to scan
 def get_ports(mode):
-    if mode == 1:  # Well-known ports
+    if mode == 1:  # Well-known ports (1-1023)
         for port in range(1, 1024):
             queue.put(port)
-    elif mode == 2:  # Registered ports
+    elif mode == 2:  # Registered ports (1-49151)
         for port in range(1, 49152):
             queue.put(port)
     elif mode == 3:  # Commonly used ports
@@ -31,43 +42,58 @@ def get_ports(mode):
         for port in ports:
             queue.put(port)
     elif mode == 4:  # User-defined ports
-        ports = input("Enter your ports (separate by blank): ")
-        ports = ports.split()
-        ports = list(map(int, ports))
-        for port in ports:
+        ports = input("Enter your ports (separate by spaces): ").split()
+        try:
+            ports = list(map(int, ports))
+            for port in ports:
+                queue.put(port)
+        except ValueError:
+            print("Invalid input. Please enter numeric port values.")
+            exit()
+    elif mode == 5:  # Security Analysis Mode (Lab Component 3)
+        critical_ports = [
+            20, 21, 22, 23, 25, 53, 80, 88, 110, 123, 139, 143, 161, 162, 389, 443,
+            445, 465, 500, 636, 993, 1433, 1434, 3306, 3389, 5060, 5061, 8080
+        ]
+        for port in critical_ports:
             queue.put(port)
+    else:
+        print("Invalid mode selected. Exiting.")
+        exit()
 
 # Worker function for multithreaded port scanning
 def worker():
     while not queue.empty():
         port = queue.get()
-        if portscan(port):
-            print(f"Port {port} is open!")
-            open_ports.append(port)
-        else:
-            print(f"Port {port} is closed!")
+        portscan(port)
+        queue.task_done()
 
 # Function to run the port scanner
 def run_scanner(threads, mode):
     get_ports(mode)
     
+    if queue.qsize() == 0:
+        print("\n[!] No ports to scan. Check the mode selection.")
+        return
+    
     thread_list = []
-    for t in range(threads):
+    for _ in range(threads):
         thread = threading.Thread(target=worker)
         thread_list.append(thread)
-    
-    for thread in thread_list:
         thread.start()
     
     for thread in thread_list:
         thread.join()
-    
-    print("Open ports are:", open_ports)
+
+    # Final output summary
+    print("\n[+] Scan complete.")
+    print(f"Open ports: {sorted(open_ports)}")
+    print(f"Closed ports: {len(closed_ports)} ports were closed.")
 
 # Example usage
 if __name__ == "__main__":
     print("Running port scanner...")
     threads = int(input("Enter the number of threads: "))
-    print("Modes: \n1: Well-known ports (1-1023)\n2: Registered ports (1-49151)\n3: Common ports\n4: Custom ports")
+    print("Modes: \n1: Well-known ports (1-1023)\n2: Registered ports (1-49151)\n3: Common ports\n4: Custom ports\n5: Security analysis ports")
     mode = int(input("Enter the scanning mode: "))
     run_scanner(threads, mode)
